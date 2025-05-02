@@ -1,4 +1,4 @@
-from src.masks import get_mask_card_number, get_mask_account
+from src.masks import get_mask_account, get_mask_card_number
 
 
 def mask_account_card(account_info: str) -> str:
@@ -18,10 +18,10 @@ def mask_account_card(account_info: str) -> str:
         'Счет **4305'
     """
     if "счет" in account_info.lower():
-        parts = account_info.rsplit(' ', 1)
+        parts = account_info.rsplit(" ", 1)
         return f"{parts[0]} {get_mask_account(parts[1])}"
     else:
-        parts = account_info.rsplit(' ', 1)
+        parts = account_info.rsplit(" ", 1)
         return f"{parts[0]} {get_mask_card_number(parts[1])}"
 
 
@@ -36,5 +36,6 @@ def get_date(date_str: str) -> str:
         Строка с датой в формате ДД.ММ.ГГГГ
     """
     from datetime import datetime
+
     date_obj = datetime.fromisoformat(date_str)
     return date_obj.strftime("%d.%m.%Y")
