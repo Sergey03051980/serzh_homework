@@ -18,20 +18,23 @@ poetry install
 ```
 # Полный тестовый прогон
 poetry run pytest -v --cov=src --cov-report=html
-```
-# Открыть отчет о покрытии
+
+## Открыть отчет о покрытии
+
 open reports/coverage/index.html
-```
+
+
 ### Детали реализации
 
 ## Ключевые модули
 # Модуль	Функционал	Пример использования
+```
 masks.py	Маскировка карт/счетов	get_mask_card_number("1234...")
 processing.py	Фильтрация и сортировка операций	filter_by_state(ops, "EXECUTED")
 widget.py	Основной интерфейс приложения	mask_account_card("Visa 1234")
 ```
 ### Пример теста из test_processing.py
-
+```
 def test_filter_by_state():
     ops = [{"state": "EXECUTED"}, {"state": "CANCELED"}]
     assert len(filter_by_state(ops)) == 1
