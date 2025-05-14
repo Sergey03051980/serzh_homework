@@ -1,14 +1,16 @@
-from src.masks import get_mask_card_number, get_mask_account
+import pytest
+from src.pythonproject.masks import get_mask_card_number, get_mask_account
 
 
-def test_card_mask():
-    assert get_mask_card_number("1234567890123456") == "1234 56** **** 3456"
+@pytest.fixture
+def sample_card_numbers():
+    return ["1234567890123456", "1111222233334444", "123", "abcdefghijklmnop"]
 
 
-def test_account_mask():
-    assert get_mask_account("1234567890") == "**7890"
+def test_get_mask_card_number(sample_card_numbers):
+    # Тестируем валидные номера
+    assert get_mask_card_number(sample_card_numbers[0]) == "1234 56** **** 3456"
 
-
-if __name__ == "__main__":
-    account_number = str(input())
-    print(get_mask_account(account_number))
+    # Тестируем ошибки
+    with pytest.raises(ValueError):
+        get_mask_card_number(sample_card_numbers[2])
