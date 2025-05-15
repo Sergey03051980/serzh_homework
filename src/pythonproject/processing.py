@@ -1,55 +1,55 @@
+from typing import List, Dict, Any, Literal
 from datetime import datetime
-from typing import Any, Dict, List
 
 
 def filter_by_state(
-    operations: List[Dict[str, Any]], state: str = "EXECUTED"
+        operations: List[Dict[str, Any]],
+        state: Literal["EXECUTED", "CANCELED", "PENDING"] = "EXECUTED"
 ) -> List[Dict[str, Any]]:
     """
-    Фильтрует список операций по значению ключа 'state'.
+    Фильтрует операции по статусу.
 
     Args:
-        operations: Список словарей с банковскими операциями.
-                   Каждая операция должна содержать ключ 'state'.
-        state: Значение состояния для фильтрации. По умолчанию 'EXECUTED'.
+        operations: Список операций
+        state: Статус для фильтрации (по умолчанию "EXECUTED")
 
     Returns:
-        Новый список операций, где каждая операция имеет указанное состояние.
-    """
-    if not operations:
-        return []
+        Отфильтрованный список операций
 
+    Examples:
+        >>> filter_by_state([{"state": "EXECUTED"}])
+        [{'state': 'EXECUTED'}]
+    """
+    if not isinstance(operations, list):
+        raise TypeError("Ожидается список операций")
     return [op for op in operations if op.get("state") == state]
 
 
 def sort_by_date(
-    operations: List[Dict[str, Any]], reverse: bool = True
+        operations: List[Dict[str, Any]],
+        reverse: bool = True
 ) -> List[Dict[str, Any]]:
     """
-    Сортирует список операций по дате (ключ 'date').
+    Сортирует операции по дате.
 
     Args:
-        operations: Список словарей с банковскими операциями.
-                   Каждая операция должна содержать ключ 'date' в формате ISO.
-        reverse: Если True - сортировка по убыванию (новые сначала),
-                 если False - по возрастанию (старые сначала).
+        operations: Список операций
+        reverse: Если True - новые сначала (по умолчанию)
 
     Returns:
-        Новый список операций, отсортированный по дате.
-    """
-    if not operations:
-        return []
+        Отсортированный список операций
 
-    def get_date(op: Dict[str, Any]) -> datetime:
+    Examples:
+        >>> sort_by_date([{"date": "2023-01-01"}, {"date": "2023-01-02"}])
+        [{'date': '2023-01-02'}, {'date': '2023-01-01'}]
+    """
+    if not isinstance(operations, list):
+        raise TypeError("Ожидается список операций")
+
+    def get_date(op):
         try:
             return datetime.fromisoformat(op["date"])
-        except KeyError:
-            raise KeyError(
-                f"Операция {op.get('id', 'без ID')} не содержит ключа 'date'"
-            )
-        except ValueError:
-            raise ValueError(
-                f"Неверный формат даты в операции {op.get('id', 'без ID')}: {op['date']}"
-            )
+        except (KeyError, ValueError, TypeError):
+            return datetime.min if reverse else datetime.max
 
     return sorted(operations, key=get_date, reverse=reverse)

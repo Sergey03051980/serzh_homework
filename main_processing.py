@@ -1,4 +1,4 @@
-from processing import filter_by_state, sort_by_date
+from src.pythonproject.processing import filter_by_state, sort_by_date
 
 sample_data = [
     {'id': 41428829, 'state': 'EXECUTED', 'date': '2019-07-03T18:35:29.512364'},
@@ -8,6 +8,10 @@ sample_data = [
 ]
 
 if __name__ == "__main__":
-    print("EXECUTED операции:", filter_by_state(sample_data))
-    print("Отсортировано по дате:", sort_by_date(sample_data))
+    print("=== Фильтрация операций ===")
+    print("EXECUTED операции:", [op['id'] for op in filter_by_state(sample_data)])
+    print("CANCELED операции:", [op['id'] for op in filter_by_state(sample_data, 'CANCELED')])
 
+    print("\n=== Сортировка операций ===")
+    print("По убыванию даты:", [op['id'] for op in sort_by_date(sample_data)])
+    print("По возрастанию даты:", [op['id'] for op in sort_by_date(sample_data, False)])
