@@ -32,8 +32,11 @@ addopts = "--cov=src --cov-report=html --cov-report=term"
 
 [tool.coverage.run]
 omit = ["*/tests/*"]
+source = ["src"]
+branch = true  # Проверять покрытие ветвлений
 
 [tool.coverage.report]
 precision = 1
 show_missing = true
 skip_covered = true
+fail_under = 80

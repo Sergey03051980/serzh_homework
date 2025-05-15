@@ -17,12 +17,13 @@ cd bank_operations
 poetry install
 ```
 # Полный тестовый прогон
+```
 poetry run pytest -v --cov=src --cov-report=html
-
+```
 ## Открыть отчет о покрытии
-
+```
 open reports/coverage/index.html
-
+```
 
 ### Детали реализации
 
@@ -44,4 +45,29 @@ def test_filter_by_state():
 Соответствие PEP 8: 100% (flake8)
 Проверка типов: mypy ✅
 
+```
+## Модуль generators
+
+### Функции:
+```
+1. **`filter_by_currency(transactions, currency)`**  
+   Фильтрует транзакции по валюте (USD/RUB/EUR)
+   
+2. **`transaction_descriptions(transactions)`**  
+   Возвращает описания транзакций
+
+3. **`card_number_generator(start, end)`**  
+   Генерирует номера карт в заданном диапазоне
+
+### Примеры:
+```python
+# Фильтрация USD транзакций
+
+for tx in filter_by_currency(transactions, "USD"):
+    print(tx["id"])
+
+# Генерация номеров карт
+
+for card in card_number_generator(1, 5):
+    print(card)  # 0000 0000 0000 0001 ... 0000 0000 0000 0005
 ```
