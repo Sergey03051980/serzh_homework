@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Any
 
 @pytest.fixture
 def sample_card_numbers() -> List[str]:
@@ -72,4 +72,34 @@ def sample_operations() -> List[Dict]:
             "date": "invalid-date",  # специально невалидная
             "description": "Invalid Operation",
         },
+    ]
+
+@pytest.fixture
+def sample_transactions() -> List[Dict[str, Any]]:
+    return [
+        {
+            "id": 1,
+            "operationAmount": {
+                "amount": "100.00",
+                "currency": {"code": "USD"}
+            },
+            "description": "Payment 1"
+        },
+        {
+            "id": 2,
+            "operationAmount": {
+                "amount": "200.00",
+                "currency": {"code": "EUR"}
+            },
+            "description": "Payment 2"
+        }
+    ]
+
+@pytest.fixture
+def edge_cases() -> List[Dict[str, Any]]:
+    return [
+        {},
+        {"operationAmount": {}},
+        {"operationAmount": {"currency": {}}},
+        None
     ]
