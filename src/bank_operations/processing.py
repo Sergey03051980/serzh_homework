@@ -1,5 +1,7 @@
-from typing import List, Dict, Any, Literal
 from datetime import datetime
+from typing import Any, Dict, List, Literal
+
+from bank_operations.decorators import log
 
 
 def filter_by_state(
@@ -53,3 +55,23 @@ def sort_by_date(
             return datetime.min if reverse else datetime.max
 
     return sorted(operations, key=get_date, reverse=reverse)
+
+
+@log(filename="transactions.log")
+def transfer(amount: float, from_acc: str, to_acc: str) -> str:
+    """Выполняет перевод денежных средств между счетами.
+
+    Args:
+        amount: Сумма перевода
+        from_acc: Номер исходного счета
+        to_acc: Номер целевого счета
+
+    Returns:
+        Подтверждение операции в виде строки
+    """
+
+    return f"Transferred {amount} from {from_acc} to {to_acc}"
+
+
+if __name__ == "__main__":
+    print(transfer(100.0, "ACC123", "ACC456"))

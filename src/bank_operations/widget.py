@@ -1,6 +1,8 @@
 from datetime import datetime
 
+from .decorators import log
 from .masks import get_mask_account, get_mask_card_number
+from .processing import sort_by_date  # Перенесён в глобальные импорты
 
 
 def mask_account_card(account_info: str) -> str:
@@ -44,10 +46,13 @@ def get_date(date_str: str) -> str:
         raise ValueError("Неверный формат даты") from e
 
 
-def print_operations(operations):
-    """Печатает отсортированные операции с маскировкой (интеграция с processing.py)"""
-    from .processing import \
-        sort_by_date  # Локальный импорт во избежание циклических зависимостей
+@log()
+def show_balance(account_id: str) -> str:
+    """Возвращает баланс счета."""
+    return "Balance: 1000 USD"
 
+
+def print_operations(operations):
+    """Печатает отсортированные операции с маскировкой."""
     for op in sort_by_date(operations):
         print(f"{get_date(op['date'])} {mask_account_card(op['description'])}")

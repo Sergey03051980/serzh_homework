@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from src.pythonproject.widget import mask_account_card, get_date
+from src.bank_operations.widget import mask_account_card, get_date
 
 @pytest.fixture
 def sample_account_strings():

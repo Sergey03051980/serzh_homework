@@ -1,5 +1,5 @@
 import pytest
-from src.pythonproject.masks import get_mask_card_number, get_mask_account
+from src.bank_operations.masks import get_mask_card_number, get_mask_account
 
 @pytest.mark.parametrize("card_num,expected", [
     ("1234567890123456", "1234 56** **** 3456"),
