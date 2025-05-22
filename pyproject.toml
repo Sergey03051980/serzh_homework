@@ -6,7 +6,7 @@ authors = ["Serzh Ivashchenko <serzh466163@gmail.com>"]
 readme = "README.md"
 
 packages = [
-    {include = "pythonproject", from = "src"}
+    {include = "bank_operations", from = "src"}
 ]
 
 [tool.poetry.dependencies]
