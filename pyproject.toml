@@ -6,7 +6,7 @@ authors = ["Serzh Ivashchenko <serzh466163@gmail.com>"]
 readme = "README.md"
 
 packages = [
-    {include = "pythonproject", from = "src"}
+    { include = "bank_operations", from = "src" }
 ]
 
 [tool.poetry.dependencies]
@@ -29,6 +29,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=src --cov-report=html --cov-report=term"
+filterwarnings = [
+    "ignore::CoverageWarning",
+]
 
 [tool.coverage.run]
 omit = ["*/tests/*"]

@@ -1,5 +1,5 @@
 # src/pythonproject/generators.py
-from typing import Iterator, Dict, List, Any
+from typing import Any, Dict, Iterator, List
 
 
 def filter_by_currency(transactions: List[Dict[str, Any]], currency: str) -> Iterator[Dict[str, Any]]:

@@ -1,7 +1,7 @@
 # tests/test_processing.py
 import pytest
 from datetime import datetime
-from src.pythonproject.processing import filter_by_state, sort_by_date
+from src.bank_operations.processing import filter_by_state, sort_by_date
 
 @pytest.fixture
 def sample_data():

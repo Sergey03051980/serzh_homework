@@ -1,6 +1,6 @@
 # tests/test_generators.py
 import pytest
-from src.pythonproject.generators import *
+from src.bank_operations.generators import *
 
 def test_filter_by_currency(sample_transactions):
     usd = list(filter_by_currency(sample_transactions, "USD"))
