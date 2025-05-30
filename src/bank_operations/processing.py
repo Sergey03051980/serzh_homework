@@ -5,8 +5,8 @@ from bank_operations.decorators import log
 
 
 def filter_by_state(
-        operations: List[Dict[str, Any]],
-        state: Literal["EXECUTED", "CANCELED", "PENDING"] = "EXECUTED"
+    operations: List[Dict[str, Any]],
+    state: Literal["EXECUTED", "CANCELED", "PENDING"] = "EXECUTED",
 ) -> List[Dict[str, Any]]:
     """
     Фильтрует операции по статусу.
@@ -28,8 +28,7 @@ def filter_by_state(
 
 
 def sort_by_date(
-        operations: List[Dict[str, Any]],
-        reverse: bool = True
+    operations: List[Dict[str, Any]], reverse: bool = True
 ) -> List[Dict[str, Any]]:
     """
     Сортирует операции по дате.
