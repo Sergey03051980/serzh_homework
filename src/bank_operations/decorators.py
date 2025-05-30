@@ -2,10 +2,12 @@ import datetime
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
-def log(filename: Optional[str] = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
+def log(
+    filename: Optional[str] = None,
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     Декоратор для логирования вызовов функций.
 

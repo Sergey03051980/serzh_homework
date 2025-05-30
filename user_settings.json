@@ -1,0 +1,19 @@
+{
+  "user_stocks": [
+    "AAPL",
+    "MSFT",
+    "TSLA",
+    "GOOGL"
+  ],
+  "user_currencies": [
+    "USD",
+    "EUR",
+    "GBP"
+  ],
+  "cashback_categories": [
+    "Супермаркеты",
+    "Рестораны",
+    "Транспорт"
+  ],
+  "investment_rounding_step": 50
+}
