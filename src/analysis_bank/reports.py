@@ -1,7 +1,6 @@
 import functools
 import json
 import logging
-from datetime import datetime, timedelta
 from typing import Any, Callable, Optional
 
 import pandas as pd
@@ -46,137 +45,58 @@ def report_decorator(filename: Optional[str] = None) -> Callable:
 
 
 @report_decorator()
-def spending_by_category(
-    transactions: pd.DataFrame, category: str, date: Optional[str] = None
-) -> pd.DataFrame:
-    """Calculate spending by category for last 3 months.
+def spending_by_category(transactions: pd.DataFrame, category: str, start_date):
+    if not pd.api.types.is_datetime64_any_dtype(transactions["Дата_операции"]):
+        """Calculate spending by category since a given date."""
+        # Преобразуем даты в datetime
+        transactions = transactions.copy()  # Чтобы избежать SettingWithCopyWarning
+        transactions["Дата_операции"] = pd.to_datetime(transactions["Дата_операции"])
+        start_date = pd.to_datetime(start_date)
 
-    Args:
-        transactions: DataFrame with transactions
-        category: Category to analyze
-        date: Reference date (default: current date)
+    # Фильтруем данные
+    mask = (
+            (transactions["Дата_операции"] >= start_date) &
+            (transactions["Описание"].str.contains(category, case=False))
+    )
+    filtered = transactions[mask]
 
-    Returns:
-        DataFrame with spending by month
-    """
-    try:
-        if date is None:
-            date_obj = datetime.now()
-        else:
-            date_obj = datetime.strptime(date, "%Y-%m-%d")
-
-        end_date = date_obj
-        start_date = end_date - timedelta(days=90)
-
-        # Filter transactions
-        filtered = transactions[
-            (transactions["Дата операции"] >= start_date)
-            & (transactions["Дата операции"] <= end_date)
-            & (transactions["Категория"] == category)
-        ]
-
-        # Group by month
-        result = (
-            filtered.groupby(filtered["Дата операции"].dt.to_period("M"))[
-                "Сумма платежа"
-            ]
-            .sum()
-            .reset_index()
-        )
-
-        result["Дата операции"] = result["Дата операции"].astype(str)
-        return result
-    except Exception as e:
-        logger.error(f"Error in spending_by_category: {e}")
-        raise
+    return filtered["Сумма"].sum()
 
 
 @report_decorator()
-def spending_by_weekday(
-    transactions: pd.DataFrame, date: Optional[str] = None
-) -> pd.DataFrame:
-    """Calculate average spending by weekday for last 3 months.
+def spending_by_weekday(transactions, start_date):
+    transactions = transactions.copy()
+    transactions["Дата_операции"] = pd.to_datetime(transactions["Дата_операции"])
+    start_date = pd.to_datetime(start_date)
 
-    Args:
-        transactions: DataFrame with transactions
-        date: Reference date (default: current date)
+    filtered = transactions[transactions["Дата_операции"] >= start_date]
 
-    Returns:
-        DataFrame with average spending by weekday
-    """
-    try:
-        if date is None:
-            date_obj = datetime.now()
-        else:
-            date_obj = datetime.strptime(date, "%Y-%m-%d")
+    # Создаем все возможные дни недели
+    weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    filtered["День_недели"] = filtered["Дата_операции"].dt.day_name()
 
-        end_date = date_obj
-        start_date = end_date - timedelta(days=90)
+    # Группируем и добавляем отсутствующие дни
+    result = filtered.groupby("День_недели", as_index=False)["Сумма"].sum()
+    result = result.set_index("День_недели").reindex(weekdays).fillna(0).reset_index()
 
-        # Filter transactions
-        filtered = transactions[
-            (transactions["Дата операции"] >= start_date)
-            & (transactions["Дата операции"] <= end_date)
-        ]
-
-        # Calculate average by weekday
-        filtered["weekday"] = filtered["Дата операции"].dt.weekday
-        result = filtered.groupby("weekday")["Сумма платежа"].mean().reset_index()
-
-        # Map weekday numbers to names
-        weekday_names = {
-            0: "Monday",
-            1: "Tuesday",
-            2: "Wednesday",
-            3: "Thursday",
-            4: "Friday",
-            5: "Saturday",
-            6: "Sunday",
-        }
-        result["weekday"] = result["weekday"].map(weekday_names)
-
-        return result
-    except Exception as e:
-        logger.error(f"Error in spending_by_weekday: {e}")
-        raise
+    return result
 
 
 @report_decorator("workday_spending_report.json")
-def spending_by_workday(
-    transactions: pd.DataFrame, date: Optional[str] = None
-) -> pd.DataFrame:
-    """Calculate average spending on workdays vs weekends.
+def spending_by_workday(transactions, start_date):
+    transactions = transactions.copy()
+    transactions["Дата_операции"] = pd.to_datetime(transactions["Дата_операции"])
+    start_date = pd.to_datetime(start_date)
 
-    Args:
-        transactions: DataFrame with transactions
-        date: Reference date (default: current date)
+    filtered = transactions[transactions["Дата_операции"] >= start_date]
+    filtered["Тип_дня"] = filtered["Дата_операции"].apply(
+        lambda x: "Рабочий" if x.weekday() < 5 else "Выходной"
+    )
 
-    Returns:
-        DataFrame with average spending by day type
-    """
-    try:
-        if date is None:
-            date_obj = datetime.now()
-        else:
-            date_obj = datetime.strptime(date, "%Y-%m-%d")
+    # Группируем и добавляем оба типа дней
+    result = filtered.groupby("Тип_дня", as_index=False)["Сумма"].sum()
+    if len(result) < 2:
+        types = ["Рабочий", "Выходной"]
+        result = result.set_index("Тип_дня").reindex(types).fillna(0).reset_index()
 
-        end_date = date_obj
-        start_date = end_date - timedelta(days=90)
-
-        # Filter transactions
-        filtered = transactions[
-            (transactions["Дата операции"] >= start_date)
-            & (transactions["Дата операции"] <= end_date)
-        ]
-
-        # Classify as workday or weekend
-        filtered["day_type"] = filtered["Дата операции"].apply(
-            lambda x: "weekend" if x.weekday() >= 5 else "workday"
-        )
-
-        # Calculate averages
-        result = filtered.groupby("day_type")["Сумма платежа"].mean().reset_index()
-        return result
-    except Exception as e:
-        logger.error(f"Error in spending_by_workday: {e}")
-        raise
+    return result

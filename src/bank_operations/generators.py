@@ -1,69 +1,61 @@
-# src/pythonproject/generators.py
-from typing import Any, Dict, Iterator, List
+from typing import List, Dict, Any, Generator, Iterator
 
 
-def filter_by_currency(
-    transactions: List[Dict[str, Any]], currency: str
-) -> Iterator[Dict[str, Any]]:
-    """
-    Фильтрует транзакции по указанной валюте.
+def filter_by_currency(transactions: List[Dict[str, Any]], currency: str) -> Iterator[Dict[str, Any]]:
+    """Фильтрует транзакции по указанной валюте.
 
     Args:
-        transactions: Список словарей с транзакциями
-        currency: Код валюты (например, "USD")
+        transactions: Список транзакций (словарей)
+        currency: Код валюты для фильтрации (например, "USD", "RUB")
 
-    Yields:
-        Словари транзакций с указанной валютой
+    Returns:
+        Iterator[Dict[str, Any]]: Итератор по отфильтрованным транзакциям
 
-    Examples:
-        >>> list(filter_by_currency([{"operationAmount": {"currency": {"code": "USD"}}}], "USD"))
-        [{'operationAmount': {'currency': {'code': 'USD'}}}]
+    Example:
+        >>> list(filter_by_currency([{"Валюта": "USD"}], "USD"))
+        [{"Валюта": "USD"}]
     """
-    for transaction in transactions:
-        try:
-            if transaction["operationAmount"]["currency"]["code"] == currency.upper():
-                yield transaction
-        except (KeyError, TypeError):
-            continue
+    return (t for t in transactions if t.get("Валюта") == currency)
 
 
 def transaction_descriptions(transactions: List[Dict[str, Any]]) -> Iterator[str]:
-    """
-    Генерирует описания транзакций.
+    """Извлекает описания из списка транзакций.
 
     Args:
-        transactions: Список словарей с транзакциями
+        transactions: Список транзакций
 
-    Yields:
-        Описание каждой транзакции
+    Returns:
+        Iterator[str]: Итератор по описаниям транзакций
 
-    Examples:
-        >>> list(transaction_descriptions([{"description": "Payment"}]))
-        ['Payment']
+    Raises:
+        KeyError: Если у транзакции отсутствует поле "Описание"
+
+    Example:
+        >>> list(transaction_descriptions([{"Описание": "Test"}]))
+        ["Test"]
     """
-    for transaction in transactions:
-        try:
-            yield transaction["description"]
-        except KeyError:
-            continue
+    return (t["Описание"] for t in transactions)
 
 
-def card_number_generator(start: int, end: int) -> Iterator[str]:
-    """
-    Генерирует номера карт в указанном диапазоне.
+def card_number_generator(start: int, end: int) -> Generator[str, None, None]:
+    """Генерирует номера банковских карт в заданном диапазоне.
 
     Args:
-        start: Начальный номер (от 1)
-        end: Конечный номер (до 9999999999999999)
+        start: Начальный номер (включительно)
+        end: Конечный номер (включительно)
 
-    Yields:
-        Номера карт в формате "XXXX XXXX XXXX XXXX"
+    Returns:
+        Generator[str, None, None]: Генератор номеров карт в формате 0000 0000 0000 XXXX
 
-    Examples:
+    Raises:
+        ValueError: Если start > end
+
+    Example:
         >>> list(card_number_generator(1, 2))
         ['0000 0000 0000 0001', '0000 0000 0000 0002']
     """
-    for num in range(start, end + 1):
-        yield f"{num:016d}"[:4] + " " + f"{num:016d}"[4:8] + " " + f"{num:016d}"[
-            8:12
-        ] + " " + f"{num:016d}"[12:16]
+    if start > end:
+        raise ValueError("Start value cannot be greater than end value")
+
+    for i in range(start, end + 1):
+        yield f"0000 0000 0000 {i:04d}"

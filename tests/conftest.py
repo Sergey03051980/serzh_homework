@@ -1,6 +1,7 @@
-from datetime import timedelta
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Dict, List, Any
 
+import pandas as pd
 import pytest
 
 
@@ -83,83 +84,65 @@ def sample_operations() -> List[Dict]:
 
 @pytest.fixture
 def sample_transactions() -> List[Dict[str, Any]]:
+    """Фикстура предоставляет тестовые данные транзакций.
+
+    Returns:
+        List[Dict[str, Any]]: Список транзакций с разными валютами и описаниями
+        Пример структуры:
+        [
+            {
+                "id": 1,
+                "Дата_операции": "2023-05-01",
+                "Валюта": "USD",
+                "Описание": "Payment 1"
+            },
+            ...
+        ]
+    """
     return [
         {
             "id": 1,
-            "operationAmount": {"amount": "100.00", "currency": {"code": "USD"}},
-            "description": "Payment 1",
+            "Дата_операции": "2023-05-01",
+            "Валюта": "USD",
+            "Описание": "Payment 1",
+            "Сумма": 100.50
         },
         {
             "id": 2,
-            "operationAmount": {"amount": "200.00", "currency": {"code": "EUR"}},
-            "description": "Payment 2",
-        },
+            "Дата_операции": "2023-05-02",
+            "Валюта": "RUB",
+            "Описание": "Payment 2",
+            "Сумма": 5000.00
+        }
     ]
 
 
 @pytest.fixture
 def edge_cases() -> List[Dict[str, Any]]:
-    return [{}, {"operationAmount": {}}, {"operationAmount": {"currency": {}}}, None]
+    """Фикстура для тестирования крайних случаев.
 
-
-from datetime import datetime
-from typing import Any, Dict, List
-
-import pandas as pd
-import pytest
-
-
-@pytest.fixture
-def sample_transactions() -> List[Dict[str, Any]]:
-    """Fixture with sample transactions data."""
+    Returns:
+        List[Dict[str, Any]]: Список проблемных транзакций:
+        - Транзакция с None в валюте
+        - Пустой словарь
+        - Транзакция с несуществующей валютой
+    """
     return [
-        {
-            "Дата операции": "2023-05-01",
-            "Номер карты": "1234567890123456",
-            "Сумма платежа": 100.0,
-            "Категория": "Супермаркеты",
-            "Описание": "Покупка в магазине",
-            "Кешбэк": 1.0,
-        },
-        {
-            "Дата операции": "2023-05-02",
-            "Номер карты": "1234567890123456",
-            "Сумма платежа": 50.0,
-            "Категория": "Кафе",
-            "Описание": "Обед в кафе",
-            "Кешбэк": 0.5,
-        },
-        {
-            "Дата операции": "2023-04-15",
-            "Номер карты": "9876543210987654",
-            "Сумма платежа": 200.0,
-            "Категория": "Переводы",
-            "Описание": "Перевод Ивану П.",
-            "Кешбэк": 0.0,
-        },
-        {
-            "Дата операции": "2023-04-10",
-            "Номер карты": "9876543210987654",
-            "Сумма платежа": -500.0,
-            "Категория": "Пополнение",
-            "Описание": "Пополнение счета",
-            "Кешбэк": 0.0,
-        },
-        {
-            "Дата операции": "2023-03-20",
-            "Номер карты": "1234567890123456",
-            "Сумма платежа": 75.0,
-            "Категория": "Супермаркеты",
-            "Описание": "Покупка в магазине",
-            "Кешбэк": 0.75,
-        },
+        {"Валюта": None, "Описание": "No currency"},
+        {},
+        {"Валюта": "EUR", "Описание": "Euro payment"}
     ]
 
 
 @pytest.fixture
-def sample_dataframe(sample_transactions: List[Dict[str, Any]]) -> pd.DataFrame:
-    """Fixture with sample DataFrame."""
-    return pd.DataFrame(sample_transactions)
+def sample_dataframe():
+    data = [
+        {"id": 1, "Дата_операции": "2023-05-01", "Валюта": "USD", "Описание": "Payment 1", "Сумма": 100.5},
+        {"id": 2, "Дата_операции": "2023-05-02", "Валюта": "RUB", "Описание": "Payment 2", "Сумма": 5000.0}
+    ]
+    df = pd.DataFrame(data)
+    df["Дата_операции"] = pd.to_datetime(df["Дата_операции"])
+    return df
 
 
 @pytest.fixture
@@ -167,41 +150,17 @@ def phone_transactions() -> List[Dict[str, Any]]:
     """Fixture with transactions containing phone numbers."""
     return [
         {
-            "Дата операции": "2023-05-01",
+            "Дата_операции": "2023-05-01",
             "Категория": "Мобильная связь",
             "Описание": "Пополнение МТС +7 921 123-45-67",
-            "Сумма платежа": 500.0,
+            "Сумма_операции": 500.0,
         },
         {
-            "Дата операции": "2023-05-02",
+            "Дата_операции": "2023-05-02",
             "Категория": "Другое",
             "Описание": "Оплата услуг",
-            "Сумма платежа": 100.0,
+            "Сумма_операции": 100.0,
         },
-    ]
-
-
-import pytest
-
-
-@pytest.fixture
-def sample_transactions():
-    return [{"amount": 100, "recipient": "John"}, ...]
-
-
-import pytest
-
-
-@pytest.fixture
-def sample_transactions():
-    return [
-        {
-            "Дата_операции": "2023-05-01",
-            "Категория": "Супермаркеты",
-            "Сумма_операции": "1000",
-            "Кешбэк": 1.0,
-            "Описание": "Покупки в магазине"
-        }
     ]
 
 
@@ -215,3 +174,13 @@ def phone_transactions():
             "Сумма_операции": "500"
         }
     ]
+
+
+@pytest.fixture
+def sample_csv(tmp_path):
+    csv_data = """Дата,Описание,Сумма
+2023-01-01,Покупка,1000
+2023-01-02,Такси,500"""
+    file = tmp_path / "test.csv"
+    file.write_text(csv_data)
+    return str(file)
