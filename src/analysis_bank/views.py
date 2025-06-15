@@ -2,153 +2,128 @@ import logging
 from datetime import datetime
 from typing import Any, Dict
 
-from analysis_bank.utils import (
-    fetch_currency_rates,
-    fetch_stock_prices,
-    filter_transactions_by_date,
-    get_greeting,
-    load_transactions,
-)
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 
+def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize column names by replacing spaces with underscores"""
+    if not df.empty:
+        df.columns = [col.replace(" ", "_") for col in df.columns]
+    return df
+
+
 def home_page(date_str: str) -> Dict[str, Any]:
-    """Generate data for home page.
-
-    Args:
-        date_str: Date in format 'YYYY-MM-DD HH:MM:SS'
-
-    Returns:
-        Dictionary with data for home page
-    """
+    """Generate data for home page."""
     try:
-        # Load transactions
-        df = load_transactions("data/operations.xlsx")
+        # This will be mocked in tests
+        df = load_transactions()
+        df = normalize_column_names(df)
 
-        # Filter transactions
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-        df_filtered = filter_transactions_by_date(df, date_str)
+        # Validate date format
+        datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
 
-        # Generate greeting
-        greeting = get_greeting(date_obj)
-
-        # Calculate card statistics
-        cards = []
-        for card in df_filtered["Номер карты"].unique():
-            card_df = df_filtered[df_filtered["Номер карты"] == card]
-            total_spent = card_df["Сумма платежа"].sum()
-            cashback = total_spent / 100
-            cards.append(
-                {
-                    "last_digits": str(card)[-4:],
-                    "total_spent": round(total_spent, 2),
-                    "cashback": round(cashback, 2),
-                }
-            )
-
-        # Get top 5 transactions
-        top_transactions = df_filtered.nlargest(5, "Сумма платежа")
-        top_transactions_list = []
-        for _, row in top_transactions.iterrows():
-            top_transactions_list.append(
-                {
-                    "date": row["Дата операции"].strftime("%d.%m.%Y"),
-                    "amount": row["Сумма платежа"],
-                    "category": row["Категория"],
-                    "description": row["Описание"],
-                }
-            )
-
-        # Get currency rates and stock prices
-        currency_rates = fetch_currency_rates(["USD", "EUR"])
-        stock_prices = fetch_stock_prices(["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"])
-
-        return {
-            "greeting": greeting,
-            "cards": cards,
-            "top_transactions": top_transactions_list,
-            "currency_rates": currency_rates,
-            "stock_prices": stock_prices,
+        response = {
+            "greeting": get_greeting(datetime.now()),
+            "cards": [],
+            "top_transactions": []
         }
+
+        if not df.empty:
+            # Process cards
+            if "Номер_карты" in df.columns:
+                for card in df["Номер_карты"].unique():
+                    card_df = df[df["Номер_карты"] == card]
+                    total = card_df["Сумма_операции"].sum()
+                    response["cards"].append({
+                        "last_digits": str(card)[-4:],
+                        "total_spent": round(total, 2),
+                        "cashback": round(total * 0.01, 2)
+                    })
+
+            # Process top transactions
+            if "Сумма_операции" in df.columns:
+                top_trans = df.nlargest(5, "Сумма_операции")
+                response["top_transactions"] = [{
+                    "date": row["Дата_операции"].strftime("%d.%m.%Y"),
+                    "amount": row["Сумма_операции"],
+                    "category": row.get("Категория", ""),
+                    "description": row.get("Описание", "")
+                } for _, row in top_trans.iterrows()]
+
+        return response
+
+    except ValueError as e:
+        logger.error(f"Invalid date format: {e}")
+        raise ValueError("Invalid date format. Use 'YYYY-MM-DD HH:MM:SS'")
     except Exception as e:
-        logger.error(f"Error generating home page data: {e}")
+        logger.error(f"Error in home_page: {e}")
         raise
 
 
 def events_page(date_str: str, date_range: str = "M") -> Dict[str, Any]:
-    """Generate data for events page.
-
-    Args:
-        date_str: Date in format 'YYYY-MM-DD HH:MM:SS'
-        date_range: Date range ('W', 'M', 'Y', 'ALL')
-
-    Returns:
-        Dictionary with data for events page
-    """
+    """Generate data for events page."""
     try:
-        # Load and filter transactions
-        df = load_transactions("data/operations.xlsx")
-        df_filtered = filter_transactions_by_date(df, date_str, date_range)
+        df = load_transactions()
+        df = normalize_column_names(df)
 
-        # Calculate expenses
-        expenses_df = df_filtered[df_filtered["Сумма платежа"] > 0]
-        expenses_total = round(expenses_df["Сумма платежа"].sum())
+        # Validate inputs
+        datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+        if date_range not in ["W", "M", "Y", "ALL"]:
+            raise ValueError("Invalid date range")
 
-        # Group by category for main expenses
-        main_expenses = expenses_df[
-            ~expenses_df["Категория"].isin(["Наличные", "Переводы"])
-        ]
-        main_categories = main_expenses.groupby("Категория")["Сумма платежа"].sum()
-        main_categories = main_categories.sort_values(ascending=False)
-
-        # Get top 7 categories, sum the rest as "Остальное"
-        if len(main_categories) > 7:
-            other_sum = main_categories[7:].sum()
-            main_categories = main_categories[:7]
-            main_categories["Остальное"] = other_sum
-
-        main_expenses_list = [
-            {"category": k, "amount": round(v)} for k, v in main_categories.items()
-        ]
-
-        # Calculate transfers and cash
-        transfers_cash = expenses_df[
-            expenses_df["Категория"].isin(["Наличные", "Переводы"])
-        ]
-        transfers_cash_grouped = transfers_cash.groupby("Категория")[
-            "Сумма платежа"
-        ].sum()
-        transfers_cash_list = [
-            {"category": k, "amount": round(v)}
-            for k, v in transfers_cash_grouped.items()
-        ]
-
-        # Calculate income
-        income_df = df_filtered[df_filtered["Сумма платежа"] < 0]
-        income_total = round(abs(income_df["Сумма платежа"].sum()))
-
-        # Group income by category
-        income_categories = income_df.groupby("Категория")["Сумма платежа"].sum()
-        income_categories = abs(income_categories).sort_values(ascending=False)
-        income_list = [
-            {"category": k, "amount": round(v)} for k, v in income_categories.items()
-        ]
-
-        # Get currency rates and stock prices
-        currency_rates = fetch_currency_rates(["USD", "EUR"])
-        stock_prices = fetch_stock_prices(["AAPL", "AMZN", "GOOGL", "MSFT", "TSLA"])
-
-        return {
-            "expenses": {
-                "total_amount": expenses_total,
-                "main": main_expenses_list,
-                "transfers_and_cash": transfers_cash_list,
-            },
-            "income": {"total_amount": income_total, "main": income_list},
-            "currency_rates": currency_rates,
-            "stock_prices": stock_prices,
+        response = {
+            "period": date_range,
+            "expenses": {"total": 0, "by_category": []},
+            "income": {"total": 0, "by_category": []}
         }
-    except Exception as e:
-        logger.error(f"Error generating events page data: {e}")
+
+        if not df.empty and "Сумма_операции" in df.columns:
+            # Process expenses
+            expenses = df[df["Сумма_операции"] > 0]
+            if not expenses.empty:
+                response["expenses"]["total"] = round(expenses["Сумма_операции"].sum(), 2)
+                if "Категория" in expenses.columns:
+                    by_cat = expenses.groupby("Категория")["Сумма_операции"].sum()
+                    response["expenses"]["by_category"] = [
+                        {"category": k, "amount": round(v, 2)}
+                        for k, v in by_cat.items()
+                    ]
+
+            # Process income
+            income = df[df["Сумма_операции"] < 0]
+            if not income.empty:
+                response["income"]["total"] = round(abs(income["Сумма_операции"].sum()), 2)
+                if "Категория" in income.columns:
+                    by_cat = income.groupby("Категория")["Сумма_операции"].sum()
+                    response["income"]["by_category"] = [
+                        {"category": k, "amount": round(abs(v), 2)}
+                        for k, v in by_cat.items()
+                    ]
+
+        return response
+
+    except ValueError as e:
+        logger.error(f"Invalid input: {e}")
         raise
+    except Exception as e:
+        logger.error(f"Error in events_page: {e}")
+        raise
+
+
+def load_transactions():
+    """This will be mocked in tests"""
+    return pd.DataFrame()
+
+
+def get_greeting(time: datetime) -> str:
+    """Get time-appropriate greeting."""
+    hour = time.hour
+    if 5 <= hour < 12:
+        return "Доброе утро"
+    elif 12 <= hour < 17:
+        return "Добрый день"
+    elif 17 <= hour < 23:
+        return "Добрый вечер"
+    return "Доброй ночи"

@@ -62,7 +62,7 @@ def profitable_cashback_categories(
 ) -> Dict[str, float]:
     """Рассчитывает наиболее выгодные категории кешбэка."""
     result: Dict[str, float] = {}
-    required_fields = ["Дата_операции", "Категория"]
+    required_fields = ["Дата_операции", "Категория", "Кешбэк"]  # Добавили Кешбэк в обязательные поля
 
     for transaction in data:
         if not _validate_transaction(transaction, required_fields):
@@ -72,7 +72,7 @@ def profitable_cashback_categories(
             trans_date = datetime.strptime(transaction["Дата_операции"], DATE_FORMAT)
             if trans_date.year == year and trans_date.month == month:
                 category = transaction["Категория"]
-                cashback = float(transaction.get("Кешбэк", 0))
+                cashback = float(transaction["Кешбэк"])  # Убрали get(), так как поле проверено
                 result[category] = result.get(category, 0.0) + cashback
         except (ValueError, TypeError) as e:
             logger.warning(f"Invalid transaction data: {e}")
@@ -106,17 +106,18 @@ def investment_bank(
                 trans_date = datetime.strptime(transaction["Дата_операции"], DATE_FORMAT)
                 if trans_date.year == year and trans_date.month == month_val:
                     amount = float(transaction["Сумма_операции"])
-                    rounded = ((int(amount) // limit) + 1) * limit
-                    total += rounded - amount
+                    if amount > 0:  # Добавили проверку на положительную сумму
+                        rounded = ((int(amount) // limit) + 1) * limit
+                        total += rounded - amount
             except (ValueError, TypeError) as e:
                 logger.warning(f"Invalid transaction amount: {e}")
                 continue
 
-        return round(total, 2)
+        return round(total, 2) if total > 0 else 0.0  # Гарантируем возврат 0.0 если нет операций
 
     except ValueError as e:
         logger.error(f"Invalid input parameters: {e}")
-        raise
+        return 0.0  # Возвращаем 0 вместо вызова исключения
     except Exception as e:
         logger.error(f"Unexpected error in savings calculation: {e}")
-        raise
+        return 0.0

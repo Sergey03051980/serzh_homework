@@ -6,19 +6,46 @@ from src.analysis_bank.services import (
 )
 
 
-def test_profitable_cashback_categories(sample_transactions):
+def test_profitable_cashback_categories():
     """Test profitable_cashback_categories calculation."""
+    sample_transactions = [
+        {
+            "Дата_операции": "2023-05-01",
+            "Категория": "Супермаркеты",
+            "Кешбэк": 1.0,
+            "Описание": "Покупка в магазине"
+        },
+        {
+            "Дата_операции": "2023-04-30",  # Не должна учитываться
+            "Категория": "Рестораны",
+            "Кешбэк": 5.0
+        }
+    ]
     result = profitable_cashback_categories(sample_transactions, 2023, 5)
     assert isinstance(result, dict)
     assert "Супермаркеты" in result
     assert result["Супермаркеты"] == 1.0
 
 
-def test_investment_bank(sample_transactions):
+def test_investment_bank():
     """Test investment_bank calculation."""
+    sample_transactions = [
+        {
+            "Дата_операции": "2023-05-15",
+            "Сумма_операции": "123.45",  # Округлится до 150 (при limit=50)
+            "Описание": "Покупка"
+        },
+        {
+            "Дата_операции": "2023-05-20",
+            "Сумма_операции": "178.90",  # Округлится до 200
+            "Описание": "Покупка"
+        }
+    ]
     result = investment_bank("2023-05", sample_transactions, 50)
     assert isinstance(result, float)
     assert result > 0
+    # 150-123.45 + 200-178.90 = 47.65
+    assert result == 47.65
 
 
 def test_find_phone_transactions(phone_transactions):
