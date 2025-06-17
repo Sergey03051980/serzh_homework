@@ -1,3 +1,5 @@
+from platform import python_version
+
 # 🏦 Банковский обработчик операций
 
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
@@ -220,9 +222,9 @@ pytest --cov=src tests/
 
 ```
 
-***Пример использования**
+**Пример использования**
 
-```pathon
+```python
 
 from src.analysis_bank.file_handlers import read_csv_transactions
 
@@ -230,3 +232,53 @@ transactions = read_csv_transactions('data/transactions.csv')
 for transaction in transactions:
     print(f"{transaction['Дата_операции']}: {transaction['Категория']} - {transaction['Сумма_операции']}")
 ```
+
+# Банковский анализатор транзакций
+
+Проект для анализа банковских транзакций с расширенными возможностями фильтрации и поиска.
+
+## 🚀 Новая функциональность
+
+### 🔍 Поиск транзакций по описанию
+
+Реализован интеллектуальный поиск с поддержкой регулярных выражений:
+
+```python
+def search_transactions_by_description(
+        transactions: List[Dict],
+        search_str: str
+) -> List[Dict]:
+    """Ищет транзакции по заданной строке в описании"""
+```
+
+**Статистика по категориям**
+
+```python
+def count_transactions_by_category(
+        transactions: List[Dict],
+        categories: List[str]
+) -> Dict[str, int]:
+    """Подсчитывает операции по категориям"""
+```
+
+**Улучшенный интерфейс**
+
+1. Загрузка из JSON
+2. Загрузка из CSV
+3. Загрузка из Excel
+
+**Примеры использования**
+
+```python
+from src.analysis_bank.utils import (
+    load_transactions,
+    search_transactions_by_description,
+    count_transactions_by_category
+)
+
+transactions = load_transactions("data/operations.xlsx")
+found = search_transactions_by_description(transactions, "перевод")
+stats = count_transactions_by_category(transactions, ["Покупка", "Перевод"])
+```
+
+

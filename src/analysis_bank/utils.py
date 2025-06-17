@@ -1,8 +1,8 @@
 import logging
+import re
+from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, List
-
-import pandas as pd
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,9 +15,26 @@ def normalize_column_names(df):
     return df
 
 
+import pandas as pd
+import os
+
+
 def load_transactions(filepath):
-    df = pd.read_excel(filepath)
-    return normalize_column_names(df)
+    """Загружает транзакции из файла"""
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"Файл {filepath} не найден")
+
+    try:
+        if filepath.endswith('.json'):
+            return pd.read_json(filepath)
+        elif filepath.endswith('.csv'):
+            return pd.read_csv(filepath)
+        elif filepath.endswith(('.xlsx', '.xls')):
+            return pd.read_excel(filepath)
+        else:
+            raise ValueError("Неподдерживаемый формат файла")
+    except Exception as e:
+        raise Exception(f"Ошибка при чтении файла: {str(e)}")
 
 
 def filter_transactions_by_date(
@@ -222,3 +239,36 @@ def events_page(date_str: str, date_range: str = "M") -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error in events_page: {e}")
         raise
+
+
+def search_transactions_by_description(transactions: List[Dict], search_str: str) -> List[Dict]:
+    """
+    Ищет транзакции по заданной строке в описании с использованием регулярных выражений.
+
+    Args:
+        transactions: Список словарей с транзакциями
+        search_str: Строка для поиска в описании
+
+    Returns:
+        Список транзакций, где описание содержит искомую строку
+    """
+    pattern = re.compile(search_str, re.IGNORECASE)
+    return [t for t in transactions if 'description' in t and pattern.search(t['description'])]
+
+
+def count_transactions_by_category(transactions: List[Dict], categories: List[str]) -> Dict[str, int]:
+    """
+    Подсчитывает количество операций по категориям.
+
+    Args:
+        transactions: Список словарей с транзакциями
+        categories: Список категорий для подсчета
+
+    Returns:
+        Словарь с количеством операций по каждой категории
+    """
+    category_counter = Counter()
+    for t in transactions:
+        if 'description' in t and t['description'] in categories:
+            category_counter[t['description']] += 1
+    return dict(category_counter)
